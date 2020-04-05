@@ -7,5 +7,7 @@ defmodule RobertChannelsWeb.Router do
 
   scope "/api", RobertChannelsWeb do
     pipe_through :api
+
+    post "/create_meeting", MeetingController, :create
   end
 end
