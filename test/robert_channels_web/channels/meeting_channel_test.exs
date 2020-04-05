@@ -2,11 +2,12 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
   use RobertChannelsWeb.ChannelCase
 
   setup do
+    {:ok, pid} = GenServer.start_link(RulesServer, :ok, name: :MEETIN)
     {:ok, _, socket} =
-      socket(RobertChannelsWeb.UserSocket, "user_id", %{some: :assign})
-      |> subscribe_and_join(RobertChannelsWeb.MeetingChannel, "meeting:example")
+      socket(RobertChannelsWeb.UserSocket, "user_id", %{subject_id: "chair"})
+      |> subscribe_and_join(RobertChannelsWeb.MeetingChannel, "meeting:MEETIN")
 
-    {:ok, socket: socket}
+    %{socket: socket, server_name: :MEETIN}
   end
 
   test "actions replies with list of actions", %{socket: socket} do
@@ -17,7 +18,7 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
   test "apply action", %{socket: socket} do
     ref = push(socket, "act", %{"action_name" => "recognize", "object_id" => "theguy"})
     assert_reply(ref, :ok, %{})
-    %{floor: %{speaker: speaker}} = (:sys.get_state(Process.whereis(:example_server)))
+    %{floor: %{speaker: speaker}} = (:sys.get_state(Process.whereis(socket.assigns.meeting_id |> String.to_atom)))
     assert speaker == "theguy"
   end
 
