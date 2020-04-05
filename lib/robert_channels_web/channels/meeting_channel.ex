@@ -35,6 +35,9 @@ defmodule RobertChannelsWeb.MeetingChannel do
     socket
     |> get_meeting
     |> RulesServer.apply_action({String.to_atom(action_name), subject_id, object_id})
+
+    broadcast(socket, "update", %{"meeting_id" => socket.assigns.meeting_id})
+
     {:reply, {:ok, %{}}, socket}
   end
 

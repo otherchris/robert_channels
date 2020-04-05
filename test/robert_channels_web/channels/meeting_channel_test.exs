@@ -22,6 +22,11 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
     assert speaker == "theguy"
   end
 
+  test "update message is pushed on action", %{socket: socket = %{assigns: %{meeting_id: meeting_id}}} do
+    ref = push(socket, "act", %{"action_name" => "recognize", "object_id" => "theguy"})
+    assert_broadcast "update", %{"meeting_id" => meeting_id}
+  end
+
   test "shout broadcasts to meeting:lobby", %{socket: socket} do
     push socket, "shout", %{"hello" => "all"}
     assert_broadcast "shout", %{"hello" => "all"}
