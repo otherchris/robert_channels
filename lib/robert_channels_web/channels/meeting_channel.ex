@@ -2,11 +2,18 @@ defmodule RobertChannelsWeb.MeetingChannel do
   use RobertChannelsWeb, :channel
 
   def join("meeting:" <> meeting_id, payload, socket) do
-    if authorized?(payload) do
-      socket = assign(socket, :meeting_id, meeting_id)
+    with {:ok, _, _} <-
+      {:ok, payload, meeting_id}
+      |> authorized?()
+      |> meeting_exists?()
+    do
+      socket = 
+        socket
+        |> assign(:meeting_id, meeting_id)
+        |> assign(:subject_id, "chair")
       {:ok, socket}
     else
-      {:error, %{reason: "unauthorized"}}
+      {:error, msg} -> {:error, %{reason: msg}}
     end
   end
 
@@ -28,6 +35,8 @@ defmodule RobertChannelsWeb.MeetingChannel do
       socket
       |> get_meeting
       |> RulesServer.check_actions(socket.assigns.subject_id)
+      |> Enum.reject(fn({k, v}) -> !v end)
+      |> Enum.map(fn({k, v}) -> k end)
     {:reply, {:ok, %{actions: actions}}, socket}
   end
 
@@ -41,10 +50,20 @@ defmodule RobertChannelsWeb.MeetingChannel do
     {:reply, {:ok, %{}}, socket}
   end
 
-  # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
+  # Checks on joining.
+  defp authorized?({:ok, payload, meeting_id}) do
+    {:ok, payload, meeting_id}
   end
+  defp authorized?({:error, msg}), do: {:error, msg}
+
+  defp meeting_exists?({:ok, payload, meeting_id}) do
+    if is_nil(Process.whereis(String.to_atom(meeting_id))) do
+      {:error, "no_meeting"}
+    else
+      {:ok, payload, meeting_id}
+    end
+  end
+  defp meeting_exists?({:error, msg}), do: {:error, msg}
 
   defp get_meeting(socket = %{assigns: %{meeting_id: meeting_id}}) do
     meeting_id

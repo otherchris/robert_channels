@@ -10,6 +10,13 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
     %{socket: socket, server_name: :MEETIN}
   end
 
+  test "join error if meeting does not exist" do
+    {:error, msg} = 
+      socket(RobertChannelsWeb.UserSocket, "user_id", %{subject_id: "chair"})
+      |> subscribe_and_join(RobertChannelsWeb.MeetingChannel, "meeting:NOPE")
+    assert msg == %{reason: "no_meeting"}
+  end
+
   test "actions replies with list of actions", %{socket: socket} do
     ref = push(socket, "actions", %{})
     assert_reply(ref, :ok, %{actions: [_ | _]})
