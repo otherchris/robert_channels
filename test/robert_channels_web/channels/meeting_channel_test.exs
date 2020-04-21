@@ -1,5 +1,6 @@
 defmodule RobertChannelsWeb.MeetingChannelTest do
   use RobertChannelsWeb.ChannelCase
+  use RobertChannelsWeb.ConnCase
 
   setup do
     {:ok, pid} = GenServer.start_link(RulesServer, :ok, name: :MEETIN)
@@ -17,26 +18,7 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
     assert msg == %{reason: "no_meeting"}
   end
 
-  test "actions replies with list of actions", %{socket: socket} do
-    ref = push(socket, "actions", %{})
-    assert_reply(ref, :ok, %{actions: [_ | _]})
-  end
-
-  test "apply action", %{socket: socket} do
-    ref = push(socket, "act", %{"action_name" => "recognize", "object_id" => "theguy"})
-    assert_reply(ref, :ok, %{})
-    %{floor: %{speaker: speaker}} = (:sys.get_state(Process.whereis(socket.assigns.meeting_id |> String.to_atom)))
-    assert speaker == "theguy"
-  end
-
-  test "update message is pushed on action", %{socket: socket = %{assigns: %{meeting_id: meeting_id}}} do
-    ref = push(socket, "act", %{"action_name" => "recognize", "object_id" => "theguy"})
-    assert_broadcast "update", %{"meeting_id" => meeting_id}
-  end
-
-  test "shout broadcasts to meeting:lobby", %{socket: socket} do
-    push socket, "shout", %{"hello" => "all"}
-    assert_broadcast "shout", %{"hello" => "all"}
+  test "update message is pushed on recognize", %{socket: socket = %{assigns: %{meeting_id: meeting_id}}} do
   end
 
   test "broadcasts are pushed to the client", %{socket: socket} do

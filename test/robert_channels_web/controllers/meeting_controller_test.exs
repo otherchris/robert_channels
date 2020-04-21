@@ -4,7 +4,7 @@ defmodule RobertChannels.MeetingControllerTest do
   use ExUnit.Case, async: true
   use RobertChannelsWeb.ConnCase
 
-  describe "create a meeting" do
+  test "create a meeting" do
     conn =
       build_conn()
       |> post("/api/create_meeting", %{})
@@ -15,8 +15,42 @@ defmodule RobertChannels.MeetingControllerTest do
     assert String.length(meeting_id) == 6
 
     meeting = Process.whereis(String.to_atom(meeting_id))
-    %{floor: %{chair: chair}} = :sys.get_state(meeting)
+    %{chair: chair} = :sys.get_state(meeting)
     assert is_binary(chair)
+  end
+
+  describe "POST action" do
+    test "recognize a speaker" do
+      {:ok, pid} = GenServer.start_link(RulesServer, :ok, name: :MEETIN)
+
+      conn = build_conn()
+      |> post("/api/action", %{
+        meeting_id: "MEETIN",
+        subject: "chair",
+        action: "RECOGNIZE",
+        payload: %{
+          speaker: "new speaker"
+        }
+      })
+      %{speaker: speaker} = :sys.get_state(pid)
+      assert speaker == "new speaker"
+    end
+
+   test "do not recognize speaker if not chair" do
+      {:ok, pid} = GenServer.start_link(RulesServer, :ok, name: :MEETIN)
+
+      conn = build_conn()
+      |> post("/api/action", %{
+        meeting_id: "MEETIN",
+        subject: "not chair",
+        action: "RECOGNIZE",
+        payload: %{
+          speaker: "new speaker"
+        }
+      })
+      %{speaker: speaker} = :sys.get_state(pid)
+      assert speaker != "new speaker"
+    end
   end
 end
 
