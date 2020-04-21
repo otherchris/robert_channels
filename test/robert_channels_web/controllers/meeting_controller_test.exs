@@ -51,6 +51,22 @@ defmodule RobertChannels.MeetingControllerTest do
       %{speaker: speaker} = :sys.get_state(pid)
       assert speaker != "new speaker"
     end
+
+   test "make a motion" do
+      {:ok, pid} = GenServer.start_link(RulesServer, :ok, name: :MEETIN)
+
+      conn = build_conn()
+      |> post("/api/action", %{
+        meeting_id: "MEETIN",
+        subject: "not chair",
+        action: "MOTION",
+        payload: %{
+          content: "my motion content"
+        }
+      })
+      %{motion_stack: [last_motion | rest]} = :sys.get_state(pid)
+      assert last_motion == %{content: "my motion content", actor_id: "not chair"} 
+    end
   end
 end
 

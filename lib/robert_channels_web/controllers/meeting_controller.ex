@@ -26,6 +26,8 @@ defmodule RobertChannelsWeb.MeetingController do
     case action do
       "RECOGNIZE" -> 
         RulesServer.recognize(meeting, payload["speaker"], subject)
+      "MOTION" -> 
+        RulesServer.motion(meeting, payload["content"], subject)
     end
 
     conn
