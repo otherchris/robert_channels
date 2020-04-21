@@ -19,6 +19,16 @@ defmodule RobertChannelsWeb.MeetingChannelTest do
   end
 
   test "update message is pushed on recognize", %{socket: socket = %{assigns: %{meeting_id: meeting_id}}} do
+    conn = build_conn()
+      |> post("/api/action", %{
+        meeting_id: "MEETIN",
+        subject: "chair",
+        action: "RECOGNIZE",
+        payload: %{
+          speaker: "new speaker"
+        }
+      })
+    assert_broadcast "update", %Meeting{speaker: "new speaker"}
   end
 
   test "broadcasts are pushed to the client", %{socket: socket} do

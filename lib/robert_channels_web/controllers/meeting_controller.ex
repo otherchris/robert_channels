@@ -30,6 +30,9 @@ defmodule RobertChannelsWeb.MeetingController do
         RulesServer.motion(meeting, payload["content"], subject)
     end
 
+    meeting_state = :sys.get_state(meeting)
+    RobertChannelsWeb.Endpoint.broadcast("meeting:#{conn.body_params["meeting_id"]}", "update", meeting_state)
+
     conn
     |> put_resp_header("content-type", "application/json")
     |> send_resp(200, conn.body_params |> Jason.encode!())

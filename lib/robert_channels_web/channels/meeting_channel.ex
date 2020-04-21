@@ -30,26 +30,6 @@ defmodule RobertChannelsWeb.MeetingChannel do
     {:noreply, socket}
   end
 
-  def handle_in("actions", _, socket) do
-    actions =
-      socket
-      |> get_meeting
-      |> RulesServer.check_actions(socket.assigns.subject_id)
-      |> Enum.reject(fn({k, v}) -> !v end)
-      |> Enum.map(fn({k, v}) -> k end)
-    {:reply, {:ok, %{actions: actions}}, socket}
-  end
-
-  def handle_in("act", %{"action_name" => action_name, "object_id" => object_id}, socket = %{assigns: %{subject_id: subject_id}}) do
-    socket
-    |> get_meeting
-    |> RulesServer.apply_action({String.to_atom(action_name), subject_id, object_id})
-
-    broadcast(socket, "update", %{"meeting_id" => socket.assigns.meeting_id})
-
-    {:reply, {:ok, %{}}, socket}
-  end
-
   # Checks on joining.
   defp authorized?({:ok, payload, meeting_id}) do
     {:ok, payload, meeting_id}
@@ -66,6 +46,12 @@ defmodule RobertChannelsWeb.MeetingChannel do
   defp meeting_exists?({:error, msg}), do: {:error, msg}
 
   defp get_meeting(socket = %{assigns: %{meeting_id: meeting_id}}) do
+    meeting_id
+    |> String.to_atom()
+    |> Process.whereis
+  end
+
+  defp get_meeting(meeting_id) do
     meeting_id
     |> String.to_atom()
     |> Process.whereis
